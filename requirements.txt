@@ -1,9 +1,17 @@
-./MDP_Dataset_Builder/MDP_Simulator/mdp_simulator-0.1.12-py3-none-any.whl
+shap
+faiss-cpu
 IPython==8.11.0
 scikit-learn==1.2.2
 xgboost==1.7.5
 lime==0.2.0.1
 pymoo==0.6.0.1
 numpy==1.24.1
-colorama==0.4.6
+./MDP_Dataset_Builder/MDP_Simulator/mdp_simulator-0.1.12-py3-none-any.whl
+# MDP-Simulator requirements
+colorama~=0.4.6
+termcolor==2.2.0
+scipy==1.10.0
+arviz==0.14.0
+pandas==1.5.3
+pymdptoolbox
 matplotlib==3.6.3
