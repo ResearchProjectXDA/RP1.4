@@ -163,7 +163,7 @@ def personalizedBarChart(data, name, path=None, show=False, percentage=False):
 os.chdir(sys.path[0])
 evaluate = False
 
-pathToResults = sys.argv[1]
+pathToResults = "../results/1ss/allReqs/" #sys.argv[1]
 
 featureNames = ["cruise speed",
                 "image resolution",
@@ -191,29 +191,34 @@ if evaluate:
 # read outcomes from csv
 customOutcomes = pd.read_csv(pathToResults + 'customDataset.csv')
 nsga3Outcomes = pd.read_csv(pathToResults + 'nsga3Dataset.csv')
+anchorsOutcomes = pd.read_csv(pathToResults + 'anchorsDataset.csv')
 
 # build indices arrays
 nsga3ConfidenceNames = ['nsga3_confidence_' + req for req in reqs]
 nsga3OutcomeNames = ['nsga3_outcome_' + req for req in reqs]
 customConfidenceNames = ['custom_confidence_' + req for req in reqs]
 customOutcomeNames = ['custom_outcome_' + req for req in reqs]
+anchorsConfidenceNames = ['anchors_confidence_' + req for req in reqs]
+anchorsOutcomeNames = ['anchors_outcome_' + req for req in reqs]
 
 #outcomes dataframe
-outcomes = pd.concat([nsga3Outcomes[reqs], customOutcomes[reqs]], axis=1)
-outcomes.columns = np.append(nsga3OutcomeNames, customOutcomeNames)
-outcomes = outcomes[list(sum(zip(nsga3OutcomeNames, customOutcomeNames), ()))]
+outcomes = pd.concat([nsga3Outcomes[reqs], customOutcomes[reqs], anchorsOutcomes[reqs]], axis=1)
+outcomes.columns = np.append(nsga3OutcomeNames, customOutcomeNames, anchorsOutcomeNames)
+outcomes = outcomes[list(sum(zip(nsga3OutcomeNames, customOutcomeNames, anchorsOutcomeNames), ()))]
 
 # decompose arrays columns into single values columns
 nsga3Confidences = pd.DataFrame(results['nsga3_confidence'].to_list(),
                                 columns=nsga3ConfidenceNames)
 customConfidences = pd.DataFrame(results['custom_confidence'].to_list(),
                                  columns=customConfidenceNames)
+anchorsConfidences = pd.DataFrame(results['anchors_confidence'].to_list(),
+                                  columns=anchorsConfidenceNames)
 
 # select sub-dataframes to plot
-confidences = pd.concat([nsga3Confidences, customConfidences], axis=1)
-confidences = confidences[list(sum(zip(nsga3Confidences.columns, customConfidences.columns), ()))]
-scores = results[["nsga3_score", "custom_score"]]
-times = results[["nsga3_time", "custom_time"]]
+confidences = pd.concat([nsga3Confidences, customConfidences, anchorsConfidences], axis=1)
+confidences = confidences[list(sum(zip(nsga3Confidences.columns, customConfidences.columns, anchorsConfidences.columns), ()))]
+scores = results[["nsga3_score", "custom_score", "anchors_score"]]
+times = results[["nsga3_time", "custom_time", "anchors_time"]]
 
 # plots
 plotPath = pathToResults + 'plots/'
@@ -227,6 +232,7 @@ personalizedBoxPlot(times, "Execution time comparison", path=plotPath, seconds=T
 # predicted successful adaptations
 nsga3PredictedSuccessful = (confidences[nsga3ConfidenceNames] > targetConfidence).all(axis=1)
 customPredictedSuccessful = (confidences[customConfidenceNames] > targetConfidence).all(axis=1)
+anchorsPredictedSuccessful = (confidences[anchorsConfidenceNames] > targetConfidence).all(axis=1)
 
 personalizedBoxPlot(confidences[nsga3PredictedSuccessful], "Confidences comparison on NSGA-III predicted success", reqsNamesInGraphs, path=plotPath, percentage=False)
 personalizedBoxPlot(scores[nsga3PredictedSuccessful], "Score comparison on NSGA-III predicted success", path=plotPath)
@@ -236,32 +242,40 @@ print("NSGA-III predicted success rate: " + "{:.2%}".format(nsga3PredictedSucces
 print(str(nsga3Confidences.mean()) + "\n")
 print("XDA predicted success rate:  " + "{:.2%}".format(customPredictedSuccessful.sum() / customPredictedSuccessful.shape[0]))
 print(str(customConfidences.mean()) + "\n")
+print("Anchors predicted success rate: " + "{:.2%}".format(anchorsPredictedSuccessful.sum() / anchorsPredictedSuccessful.shape[0]))
 
 print("NSGA-III mean probas of predicted success: \n" + str(nsga3Confidences[nsga3PredictedSuccessful].mean()) + '\n')
 print("XDA mean probas of predicted success: \n" + str(customConfidences[customPredictedSuccessful].mean()) + '\n')
+print("Anchors mean probas of predicted success: \n" + str(anchorsConfidences[anchorsPredictedSuccessful].mean()) + '\n')
 
 # predicted successful adaptations
 nsga3Successful = outcomes[nsga3OutcomeNames].all(axis=1)
 customSuccessful = outcomes[customOutcomeNames].all(axis=1)
+anchorsSuccessful = outcomes[anchorsOutcomeNames].all(axis=1)
 
 nsga3SuccessRate = nsga3Successful.mean()
 customSuccessRate = customSuccessful.mean()
+anchorsSuccessRate = anchorsSuccessful.mean()
 
 # outcomes analysis
 print("NSGA-III success rate: " + "{:.2%}".format(nsga3SuccessRate))
 print(str(outcomes[nsga3OutcomeNames].mean()) + "\n")
 print("XDA success rate:  " + "{:.2%}".format(customSuccessRate))
 print(str(outcomes[customOutcomeNames].mean()) + "\n")
+print("Anchors success rate: " + "{:.2%}".format(anchorsSuccessRate))
+print(str(outcomes[anchorsOutcomeNames].mean()) + "\n")
 
 successRateIndividual = pd.concat([outcomes[nsga3OutcomeNames].rename(columns=dict(zip(nsga3OutcomeNames, reqsNamesInGraphs))).mean(),
-                                   outcomes[customOutcomeNames].rename(columns=dict(zip(customOutcomeNames, reqsNamesInGraphs))).mean()], axis=1)
-successRateIndividual.columns = ['NSGA-III', 'XDA']
+                                   outcomes[customOutcomeNames].rename(columns=dict(zip(customOutcomeNames, reqsNamesInGraphs))).mean(),
+                                   outcomes[anchorsOutcomeNames].rename(columns=dict(zip(anchorsOutcomeNames, reqsNamesInGraphs))).mean()], axis=1)
+successRateIndividual.columns = ['NSGA-III', 'XDA', 'Anchors']
 personalizedBarChart(successRateIndividual, "Success Rate Individual Reqs", plotPath)
 
-successRate = pd.DataFrame([[nsga3SuccessRate, customSuccessRate]], columns=["NSGA-III", "XDA"])
+successRate = pd.DataFrame([[nsga3SuccessRate, customSuccessRate, anchorsSuccessRate]], columns=["NSGA-III", "XDA", "Anchors"])
 personalizedBarChart(successRate, "Success Rate", plotPath)
 
 successRateOfPredictedSuccess = pd.DataFrame([[outcomes[nsga3OutcomeNames][nsga3PredictedSuccessful].all(axis=1).mean(),
-                                               outcomes[customOutcomeNames][customPredictedSuccessful].all(axis=1).mean()]],
-                                             columns=["NSGA-III", "XDA"])
+                                               outcomes[customOutcomeNames][customPredictedSuccessful].all(axis=1).mean(),
+                                               outcomes[anchorsOutcomeNames][anchorsPredictedSuccessful].all(axis=1).mean()]],
+                                             columns=["NSGA-III", "XDA", "Anchors"])
 personalizedBarChart(successRateOfPredictedSuccess, "Success Rate of Predicted Success", plotPath)
