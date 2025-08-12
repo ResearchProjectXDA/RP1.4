@@ -11,6 +11,7 @@ from model.ModelConstructor import constructModel
 import explainability_techniques.LIME as lime
 from CustomPlanner import CustomPlanner
 from NSGA3Planner import NSGA3Planner
+from AnchorsPlanner import AnchorsPlanner
 from util import vecPredictProba, evaluateAdaptations
 
 
@@ -19,9 +20,26 @@ def successScore(adaptation, reqClassifiers, targetSuccessProba):
     return np.sum(vecPredictProba(reqClassifiers, [adaptation])[0] - targetSuccessProba)
 
 
+def normalizeAdaptation(adaptation):
+    new_adaptation = []
+    for index in range(n_controllableFeatures):
+        new_adaptation.append(((adaptation[index] - controllableFeatureDomains[index][0]) / (
+                    controllableFeatureDomains[index][1] - controllableFeatureDomains[index][0])) * 100)
+
+    return new_adaptation
+
 # provided optimization score function (based on the ideal controllable feature assignment)
 def optimizationScore(adaptation):
-    return 400 - (100 - adaptation[0] + adaptation[1] + adaptation[2] + adaptation[3])
+    adaptation = normalizeAdaptation(adaptation)
+    score = 0
+    tot = 100 * n_controllableFeatures
+    for i in range(n_controllableFeatures):
+        if optimizationDirections[i] == 1:
+            score += 100 - adaptation[i]
+        else:
+            score += adaptation[i]
+    score = score / tot
+    return 1 - score
 
 # ====================================================================================================== #
 # IMPORTANT: everything named as custom in the code refers to the XDA approach                           #
@@ -50,13 +68,14 @@ if __name__ == '__main__':
                     "obstacle size",
                     "obstacle distance",
                     "firm obstacle"]
-    controllableFeaturesNames = featureNames[0:4]
-    externalFeaturesNames = featureNames[4:9]
+    controllableFeaturesNames = featureNames[0:3]
+    externalFeaturesNames = featureNames[3:7]
+    controllableFeatureIndices = [0, 1, 2]
 
     # for simplicity, we consider all the ideal points to be 0 or 100
     # so that we just need to consider ideal directions instead
     # -1 => minimize, 1 => maximize
-    optimizationDirections = [1, -1, -1, -1]
+    optimizationDirections = [1, -1, -1] #[1, -1, -1, -1]
 
     reqs = ["req_0", "req_1", "req_2", "req_3"]
 
@@ -88,11 +107,18 @@ if __name__ == '__main__':
 
     # initialize planners
     customPlanner = CustomPlanner(X_train, n_neighbors, n_startingSolutions, models, targetConfidence,
-                                  controllableFeaturesNames, [0, 1, 2, 3], controllableFeatureDomains,
+                                  controllableFeaturesNames, controllableFeatureIndices, controllableFeatureDomains,
                                   optimizationDirections, optimizationScore, 1, "../explainability_plots")
 
-    nsga3Planner = NSGA3Planner(models, targetConfidence, [0, 1, 2, 3], controllableFeatureDomains,
+    nsga3Planner = NSGA3Planner(models, targetConfidence, controllableFeatureIndices, controllableFeatureDomains,
                                 optimizationDirections, successScore, optimizationScore)
+    
+    ds_train = pd.DataFrame(np.hstack((X_train, y_train)), columns=featureNames + reqs)
+    trainPath = "../datasets/X_train.csv"
+    ds_train.to_csv(trainPath, index=False)
+    
+    anchorsPlanner = AnchorsPlanner(trainPath, models, reqs, 0.95, len(featureNames),featureNames,controllableFeatureIndices, controllableFeatureDomains)
+
 
     # create lime explainer
     limeExplainer = lime.createLimeExplainer(X_train)
@@ -108,6 +134,7 @@ if __name__ == '__main__':
     results = []
     customDataset = []
     nsga3Dataset = []
+    anchorsDataset = []
 
     path = "../explainability_plots/adaptations"
     if not os.path.exists(path):
@@ -129,6 +156,30 @@ if __name__ == '__main__':
         for i, req in enumerate(reqs):
             lime.saveExplanation(lime.explain(limeExplainer, models[i], row),
                                  path + "/" + str(k) + "_" + req + "_starting")
+
+        # anchors algorithm
+        startTime = time.time()
+        anchorsAdaptation, anchorsConfidence, _ = anchorsPlanner.findAdaptation(row)
+        anchorsScore = optimizationScore(anchorsAdaptation) if anchorsAdaptation is not None else None
+        endTime = time.time()
+        anchorsTime = endTime - startTime
+
+        if anchorsAdaptation is not None:
+            for i, req in enumerate(reqs):
+                lime.saveExplanation(lime.explain(limeExplainer, models[i], anchorsAdaptation),
+                                     path + "/" + str(k) + "_" + req + "_anchors")
+
+            print("Best anchors adaptation:        " + str(anchorsAdaptation[0:n_controllableFeatures]))
+            print("Model confidence:                " + str(anchorsConfidence))
+            print("Adaptation score:                " + str(anchorsScore) + " / 400")
+        else:
+            print("No anchors adaptation found")
+            anchorsScore = None
+
+        print("Anchors execution time:         " + str(anchorsTime) + " s")
+        print("-" * 100)
+
+        # custom algorithm
 
         startTime = time.time()
         customAdaptation, customConfidence, customScore = customPlanner.findAdaptation(row)
@@ -165,42 +216,100 @@ if __name__ == '__main__':
 
         print("-" * 100)
 
-        scoreDiff = None
-        scoreImprovement = None
+        scoreDiffCustomNSGA = None
+        scoreImprovementCustomNSGA = None
+        
+        scoreDiffAnchorsCustom = None
+        scoreImprovementAnchorsCustom = None
 
-        speedup = nsga3Time / customTime
-        meanSpeedup = (meanSpeedup * (k - 1) + speedup) / k
-        print(Fore.GREEN + "Speed-up: " + " " * 14 + str(speedup) + "x")
+        scoreDiffAnchorsNSGA = None
+        scoreImprovementAnchorsNSGA = None
+
+        speedupCustomNSGA = nsga3Time / customTime
+        speedupAnchorsNSGA = nsga3Time / anchorsTime
+        speedupAnchorsCustom = customTime / anchorsTime
+
+        meanSpeedupCustomNSGA = (meanSpeedupCustomNSGA * (k - 1) + speedupCustomNSGA) / k
+        meanSpeedupAnchorsNSGA = (meanSpeedupAnchorsNSGA * (k - 1) + speedupAnchorsNSGA) / k
+        meanSpeedupAnchorsCustom = (meanSpeedupAnchorsCustom * (k - 1) + speedupAnchorsCustom) / k
+        print(Fore.CYAN + "Speed-up anchors-NSGA3: " + " " * 14 + str(speedupAnchorsNSGA) + "x")
+        print(Fore.MAGENTA + "Speed-up anchors-custom: " + " " * 14 + str(speedupAnchorsCustom) + "x")
+        print(Fore.GREEN + "Speed-up custom-NSGA3: " + " " * 14 + str(speedupCustomNSGA) + "x")
 
         if customAdaptation is not None and nsga3Adaptation is not None:
-            scoreDiff = customScore - nsga3Score
-            scoreImprovement = scoreDiff / nsga3Score
-            print("Score diff:        " + " " * 5 + str(scoreDiff))
-            print("Score improvement: " + " " * 5 + "{:.2%}".format(scoreImprovement))
+            scoreDiffCustomNSGA = customScore - nsga3Score
+            scoreImprovementCustomNSGA = scoreDiffCustomNSGA / nsga3Score
+            print("Score Custom NSGA diff:        " + " " * 5 + str(scoreDiffCustomNSGA))
+            print("Score Custom NSGA improvement: " + " " * 5 + "{:.2%}".format(scoreImprovementCustomNSGA))
         else:
-            failedAdaptations += 1
+            failedAdaptationsCustomNSGA += 1
 
-        print(Style.RESET_ALL + Fore.YELLOW + "Mean speed-up: " + " " * 9 + str(meanSpeedup) + "x")
+        print(Style.RESET_ALL + Fore.YELLOW + "Mean speed-up Custom NSGA: " + " " * 9 + str(meanSpeedupCustomNSGA) + "x")
+        
+        if customAdaptation is not None and anchorsAdaptation is not None:
+            scoreDiffAnchorsCustom = anchorsScore - customScore
+            scoreImprovementAnchorsCustom = scoreDiffAnchorsCustom / customScore
+            print("Score diff:        " + " " * 5 + str(scoreDiffAnchorsCustom))
+            print("Score improvement: " + " " * 5 + "{:.2%}".format(scoreImprovementAnchorsCustom))
+        else:
+            failedAdaptationsAnchorsCustom += 1
+
+        print(Style.RESET_ALL + Fore.YELLOW + "Mean speed-up Anchors Custom: " + " " * 5 + str(meanSpeedupAnchorsCustom) + "x")
+
+        if anchorsAdaptation is not None and nsga3Adaptation is not None:
+            scoreDiffAnchorsNSGA = anchorsScore - nsga3Score
+            scoreImprovementAnchorsNSGA = scoreDiffAnchorsNSGA / nsga3Score
+            print("Score Anchors NSGA diff:        " + " " * 5 + str(scoreDiffAnchorsNSGA))
+            print("Score Anchors NSGA improvement: " + " " * 5 + "{:.2%}".format(scoreImprovementAnchorsNSGA))
+        else:
+            failedAdaptationsAnchorsNSGA += 1
+        
+        print(Style.RESET_ALL + Fore.YELLOW + "Mean speed-up Anchors NSGA: " + " " * 9 + str(meanSpeedupAnchorsNSGA) + "x")
+
 
         if customAdaptation is not None and nsga3Adaptation is not None:
-            meanCustomScore = (meanCustomScore * (k - 1 - failedAdaptations) + customScore) / (k - failedAdaptations)
-            meanNSGA3Score = (meanNSGA3Score * (k - 1 - failedAdaptations) + nsga3Score) / (k - failedAdaptations)
-            meanScoreDiff = (meanScoreDiff * (k - 1 - failedAdaptations) + scoreDiff) / (k - failedAdaptations)
-            meanScoreImprovement = meanScoreDiff / meanNSGA3Score
-            print("Mean score diff:        " + str(meanScoreDiff))
-            print("Mean score improvement: " + "{:.2%}".format(meanScoreImprovement))
+            meanCustomScore = (meanCustomScore * (k - 1 - failedAdaptationsCustomNSGA) + customScore) / (k - failedAdaptationsCustomNSGA)
+            meanNSGA3Score = (meanNSGA3Score * (k - 1 - failedAdaptationsCustomNSGA) + nsga3Score) / (k - failedAdaptationsCustomNSGA)
+            meanScoreDiffCustomNSGA = (meanScoreDiffCustomNSGA * (k - 1 - failedAdaptationsCustomNSGA) + scoreDiffCustomNSGA) / (k - failedAdaptationsCustomNSGA)
+            meanScoreImprovementCustomNSGA = meanScoreDiffCustomNSGA / meanNSGA3Score
+            print("Mean score diff:        " + str(meanScoreDiffCustomNSGA))
+            print("Mean score improvement: " + "{:.2%}".format(meanScoreImprovementCustomNSGA))
+        
+        if anchorsAdaptation is not None and customAdaptation is not None:
+            meanAnchorsScore = (meanCustomScore * (k - 1 - failedAdaptationsAnchorsCustom) + anchorsScore) / (k - failedAdaptationsAnchorsCustom)
+            meanCustomScore = (meanCustomScore * (k - 1 - failedAdaptationsAnchorsCustom) + customScore) / (k - failedAdaptationsAnchorsCustom)
+            meanScoreDiffAnchorsCustom = (meanScoreDiffAnchorsCustom * (k - 1 - failedAdaptationsAnchorsCustom) + scoreDiffAnchorsCustom) / (k - failedAdaptationsAnchorsCustom)
+            meanScoreImprovementAnchorsCustom = meanScoreDiffAnchorsCustom / meanCustomScore
+            print("Mean anchors custom score diff:        " + str(meanScoreDiffAnchorsCustom))
+            print("Mean anchors custom score improvement: " + "{:.2%}".format(meanScoreImprovementAnchorsCustom))
+        
+        if anchorsAdaptation is not None and nsga3Adaptation is not None:
+            meanAnchorsScore = (meanAnchorsScore * (k - 1 - failedAdaptationsAnchorsNSGA) + anchorsScore) / (k - failedAdaptationsAnchorsNSGA)
+            meanNSGA3Score = (meanNSGA3Score * (k - 1 - failedAdaptationsAnchorsNSGA) + nsga3Score) / (k - failedAdaptationsAnchorsNSGA)
+            meanScoreDiffAnchorsNSGA = (meanScoreDiffAnchorsNSGA * (k - 1 - failedAdaptationsAnchorsNSGA) + scoreDiffAnchorsNSGA) / (k - failedAdaptationsAnchorsNSGA)
+            meanScoreImprovementAnchorsNSGA = meanScoreDiffAnchorsNSGA / meanNSGA3Score
+            print("Mean anchors NSGA score diff:        " + str(meanScoreDiffAnchorsNSGA))
+            print("Mean anchors NSGA score improvement: " + "{:.2%}".format(meanScoreImprovementAnchorsNSGA))
 
         print(Style.RESET_ALL + "=" * 100)
 
-        results.append([nsga3Adaptation, customAdaptation,
-                        nsga3Confidence, customConfidence,
-                        nsga3Score, customScore, scoreDiff, scoreImprovement,
-                        nsga3Time, customTime, speedup])
+        results.append([nsga3Adaptation, customAdaptation, anchorsAdaptation,
+                        nsga3Confidence, customConfidence, anchorsConfidence,
+                        nsga3Score, customScore, anchorsScore,
+                        scoreDiffCustomNSGA, scoreDiffAnchorsCustom, scoreDiffAnchorsNSGA,
+                        scoreImprovementCustomNSGA,scoreImprovementAnchorsCustom, scoreImprovementAnchorsNSGA,
+                        nsga3Time, customTime, anchorsTime,
+                        speedupCustomNSGA, speedupAnchorsNSGA, speedupAnchorsCustom])
+        
 
-    results = pd.DataFrame(results, columns=["nsga3_adaptation", "custom_adaptation",
-                                             "nsga3_confidence", "custom_confidence",
-                                             "nsga3_score", "custom_score", "score_diff", "score_improvement[%]",
-                                             "nsga3_time", "custom_time", "speed-up"])
+
+    results = pd.DataFrame(results, columns=["nsga3_adaptation", "custom_adaptation", "anchors_adaptation",
+                                             "nsga3_confidence", "custom_confidence", "anchors_confidence",
+                                             "nsga3_score", "custom_score", "anchors_score", 
+                                             "score_diff_custom_NSGA", "score_diff_anchors_custom", "score_diff_anchors_nsga",
+                                             "score_improvement_NSGA_custom[%]", "score_improvement_anchors_custom[%]", "score_improvement_anchors_NSGA[%]",
+                                             "nsga3_time", "custom_time", "anchors_time",
+                                             "speed-up_custom_NSGA", "speed-up_anchors_NSGA", "speed-up_anchors_custom"])
     path = "../results"
     if not os.path.exists(path):
         os.makedirs(path)
