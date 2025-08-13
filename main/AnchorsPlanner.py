@@ -1128,7 +1128,7 @@ class AnchorsPlanner:
             min_prob = np.min(confidence)
             if min_prob < threshold:
                 sample = self.findBestAdaptation(sample, self.explanations[min_dist_index_observable], self.controllableFeaturesNames)
-            confidence =  vecPredictProba(self.reqClassifiers, sample.reshape(1, -1))
+            confidence =  vecPredictProba(self.reqClassifiers, sample.reshape(1, -1))[0]
             return sample, confidence, outputs           
             
 

@@ -128,6 +128,8 @@ if __name__ == '__main__':
     meanNSGA3Score = 0
     meanAnchorsScore = 0
     failedAdaptationsCustomNSGA = 0
+    failedAdaptationsAnchorsCustom = 0
+    failedAdaptationsAnchorsNSGA = 0
     meanSpeedupCustomNSGA = 0
     meanSpeedupAnchorsNSGA = 0
     meanSpeedupAnchorsCustom = 0
@@ -149,7 +151,7 @@ if __name__ == '__main__':
     for f in files:
         os.remove(f)
 
-    testNum = 200
+    testNum = 5
     for k in range(1, testNum + 1):
         rowIndex = k - 1
         row = X_test.iloc[rowIndex, :].to_numpy()
@@ -184,7 +186,7 @@ if __name__ == '__main__':
 
             print("Best adaptation Anchors:                 " + str(customAdaptation_anchors[0:n_controllableFeatures]))
             print("Model confidence:                " + str(customConfidence_anchors))
-            #print("Adaptation score:                " + str(customScore) + " /" + str(1))
+            print("Adaptation score:                " + str(customScore_anchors) + " / 400")
         else:
             print("No adaptation found")
             customScore_anchors = None
@@ -238,10 +240,10 @@ if __name__ == '__main__':
         scoreDiffAnchorsNSGA = None
         scoreImprovementAnchorsNSGA = None
 
-        speedupCustomNSGA = nsga3Time / customTime
-        speedupAnchorsNSGA = nsga3Time / anchorsTime
-        speedupAnchorsCustom = customTime / anchorsTime
-        
+        speedupCustomNSGA = nsga3Time / customTime #speedup of Custom wrt NSGA3
+        speedupAnchorsNSGA = nsga3Time / anchorsTime #speedup of Anchors wrt NSGA3
+        speedupAnchorsCustom = customTime / anchorsTime #speedup of Anchors wrt Custom
+
         meanSpeedupCustomNSGA = (meanSpeedupCustomNSGA * (k - 1) + speedupCustomNSGA) / k
         meanSpeedupAnchorsNSGA = (meanSpeedupAnchorsNSGA * (k - 1) + speedupAnchorsNSGA) / k
         meanSpeedupAnchorsCustom = (meanSpeedupAnchorsCustom * (k - 1) + speedupAnchorsCustom) / k
@@ -252,32 +254,32 @@ if __name__ == '__main__':
         if customAdaptation is not None and nsga3Adaptation is not None:
             scoreDiffCustomNSGA = customScore - nsga3Score
             scoreImprovementCustomNSGA = scoreDiffCustomNSGA / nsga3Score
-            print("Score Custom NSGA diff:        " + " " * 5 + str(scoreDiffCustomNSGA))
-            print("Score Custom NSGA improvement: " + " " * 5 + "{:.2%}".format(scoreImprovementCustomNSGA))
+            print(Fore.GREEN + "Score Custom NSGA diff:        " + " " * 5 + str(scoreDiffCustomNSGA))
+            print(Fore.GREEN + "Score Custom NSGA improvement: " + " " * 5 + "{:.2%}".format(scoreImprovementCustomNSGA))
         else:
             failedAdaptationsCustomNSGA += 1
 
-        print(Style.RESET_ALL + Fore.YELLOW + "Mean speed-up Custom NSGA: " + " " * 9 + str(meanSpeedupCustomNSGA) + "x")
+        print(Style.RESET_ALL + Fore.GREEN + "Mean speed-up Custom NSGA: " + " " * 9 + str(meanSpeedupCustomNSGA) + "x")
         
         if customAdaptation is not None and customAdaptation_anchors is not None:
             scoreDiffAnchorsCustom = customScore_anchors - customScore
             scoreImprovementAnchorsCustom = scoreDiffAnchorsCustom / customScore
-            print("Score diff:        " + " " * 5 + str(scoreDiffAnchorsCustom))
-            print("Score improvement: " + " " * 5 + "{:.2%}".format(scoreImprovementAnchorsCustom))
+            print(Fore.MAGENTA + "Score diff:        " + " " * 5 + str(scoreDiffAnchorsCustom))
+            print(Fore.MAGENTA + "Score improvement: " + " " * 5 + "{:.2%}".format(scoreImprovementAnchorsCustom))
         else:
             failedAdaptationsAnchorsCustom += 1
 
-        print(Style.RESET_ALL + Fore.YELLOW + "Mean speed-up Anchors Custom: " + " " * 5 + str(meanSpeedupAnchorsCustom) + "x")
+        print(Style.RESET_ALL + Fore.MAGENTA + "Mean speed-up Anchors Custom: " + " " * 5 + str(meanSpeedupAnchorsCustom) + "x")
 
         if customAdaptation_anchors is not None and nsga3Adaptation is not None:
             scoreDiffAnchorsNSGA = customScore_anchors - nsga3Score
             scoreImprovementAnchorsNSGA = scoreDiffAnchorsNSGA / nsga3Score
-            print("Score Anchors NSGA diff:        " + " " * 5 + str(scoreDiffAnchorsNSGA))
-            print("Score Anchors NSGA improvement: " + " " * 5 + "{:.2%}".format(scoreImprovementAnchorsNSGA))
+            print(Fore.CYAN + "Score Anchors NSGA diff:        " + " " * 5 + str(scoreDiffAnchorsNSGA))
+            print(Fore.CYAN + "Score Anchors NSGA improvement: " + " " * 5 + "{:.2%}".format(scoreImprovementAnchorsNSGA))
         else:
             failedAdaptationsAnchorsNSGA += 1
         
-        print(Style.RESET_ALL + Fore.YELLOW + "Mean speed-up Anchors NSGA: " + " " * 9 + str(meanSpeedupAnchorsNSGA) + "x")
+        print(Style.RESET_ALL + Fore.CYAN + "Mean speed-up Anchors NSGA: " + " " * 9 + str(meanSpeedupAnchorsNSGA) + "x")
 
 
         if customAdaptation is not None and nsga3Adaptation is not None:
@@ -285,24 +287,24 @@ if __name__ == '__main__':
             meanNSGA3Score = (meanNSGA3Score * (k - 1 - failedAdaptationsCustomNSGA) + nsga3Score) / (k - failedAdaptationsCustomNSGA)
             meanScoreDiffCustomNSGA = (meanScoreDiffCustomNSGA * (k - 1 - failedAdaptationsCustomNSGA) + scoreDiffCustomNSGA) / (k - failedAdaptationsCustomNSGA)
             meanScoreImprovementCustomNSGA = meanScoreDiffCustomNSGA / meanNSGA3Score
-            print("Mean score diff:        " + str(meanScoreDiffCustomNSGA))
-            print("Mean score improvement: " + "{:.2%}".format(meanScoreImprovementCustomNSGA))
+            print(Fore.GREEN + "Mean score diff:        " + str(meanScoreDiffCustomNSGA))
+            print(Fore.GREEN + "Mean score improvement: " + "{:.2%}".format(meanScoreImprovementCustomNSGA))
         
         if customAdaptation_anchors is not None and customAdaptation is not None:
             meanAnchorsScore = (meanCustomScore * (k - 1 - failedAdaptationsAnchorsCustom) + customScore_anchors) / (k - failedAdaptationsAnchorsCustom)
             meanCustomScore = (meanCustomScore * (k - 1 - failedAdaptationsAnchorsCustom) + customScore) / (k - failedAdaptationsAnchorsCustom)
             meanScoreDiffAnchorsCustom = (meanScoreDiffAnchorsCustom * (k - 1 - failedAdaptationsAnchorsCustom) + scoreDiffAnchorsCustom) / (k - failedAdaptationsAnchorsCustom)
             meanScoreImprovementAnchorsCustom = meanScoreDiffAnchorsCustom / meanCustomScore
-            print("Mean anchors custom score diff:        " + str(meanScoreDiffAnchorsCustom))
-            print("Mean anchors custom score improvement: " + "{:.2%}".format(meanScoreImprovementAnchorsCustom))
+            print(Fore.MAGENTA + "Mean anchors custom score diff:        " + str(meanScoreDiffAnchorsCustom))
+            print(Fore.MAGENTA + "Mean anchors custom score improvement: " + "{:.2%}".format(meanScoreImprovementAnchorsCustom))
         
         if customAdaptation_anchors is not None and nsga3Adaptation is not None:
             meanAnchorsScore = (meanAnchorsScore * (k - 1 - failedAdaptationsAnchorsNSGA) + customScore_anchors) / (k - failedAdaptationsAnchorsNSGA)
             meanNSGA3Score = (meanNSGA3Score * (k - 1 - failedAdaptationsAnchorsNSGA) + nsga3Score) / (k - failedAdaptationsAnchorsNSGA)
             meanScoreDiffAnchorsNSGA = (meanScoreDiffAnchorsNSGA * (k - 1 - failedAdaptationsAnchorsNSGA) + scoreDiffAnchorsNSGA) / (k - failedAdaptationsAnchorsNSGA)
             meanScoreImprovementAnchorsNSGA = meanScoreDiffAnchorsNSGA / meanNSGA3Score
-            print("Mean anchors NSGA score diff:        " + str(meanScoreDiffAnchorsNSGA))
-            print("Mean anchors NSGA score improvement: " + "{:.2%}".format(meanScoreImprovementAnchorsNSGA))
+            print(Fore.CYAN + "Mean anchors NSGA score diff:        " + str(meanScoreDiffAnchorsNSGA))
+            print(Fore.CYAN + "Mean anchors NSGA score improvement: " + "{:.2%}".format(meanScoreImprovementAnchorsNSGA))
 
         print(Style.RESET_ALL + "=" * 100)
 

@@ -49,14 +49,16 @@ def evaluateAdaptations(dataset, featureNames):
 
     customAdaptations = pd.DataFrame(dataset['custom_adaptation'].to_list(), columns=featureNames)
     nsga3Adaptations = pd.DataFrame(dataset['nsga3_adaptation'].to_list(), columns=featureNames)
+    customAdaptations_anchors = pd.DataFrame(dataset['anchors_adaptation'].to_list(), columns=featureNames)
 
     evaluateDataset(customAdaptations, "customDataset")
     evaluateDataset(nsga3Adaptations, "nsga3Dataset")
+    evaluateDataset(customAdaptations_anchors, "anchorsDataset")
 
 
 def readFromCsv(path):
     results = pd.read_csv(path)
-    columns = ["nsga3_adaptation", "custom_adaptation", "nsga3_confidence", "custom_confidence"]
+    columns = ["nsga3_adaptation", "custom_adaptation", "anchors_adaptation", "nsga3_confidence", "custom_confidence", "anchors_confidence"]
 
     # numpy arrays are read as strings, must convert them back in arrays
     for c in columns:

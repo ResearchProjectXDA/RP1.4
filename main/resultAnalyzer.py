@@ -163,7 +163,7 @@ def personalizedBarChart(data, name, path=None, show=False, percentage=False):
 os.chdir(sys.path[0])
 evaluate = False
 
-pathToResults = "../results/1ss/allReqs/" #sys.argv[1]
+pathToResults = "../results/" #sys.argv[1]
 
 featureNames = ["cruise speed",
                 "image resolution",
@@ -203,7 +203,9 @@ anchorsOutcomeNames = ['anchors_outcome_' + req for req in reqs]
 
 #outcomes dataframe
 outcomes = pd.concat([nsga3Outcomes[reqs], customOutcomes[reqs], anchorsOutcomes[reqs]], axis=1)
-outcomes.columns = np.append(nsga3OutcomeNames, customOutcomeNames, anchorsOutcomeNames)
+#outcomes.columns = np.append(nsga3OutcomeNames, customOutcomeNames, anchorsOutcomeNames)
+outcomes.columns = np.array(nsga3OutcomeNames + customOutcomeNames + anchorsOutcomeNames)
+
 outcomes = outcomes[list(sum(zip(nsga3OutcomeNames, customOutcomeNames, anchorsOutcomeNames), ()))]
 
 # decompose arrays columns into single values columns
