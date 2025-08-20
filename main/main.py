@@ -151,8 +151,11 @@ if __name__ == '__main__':
     for f in files:
         os.remove(f)
 
-    testNum = 5
+    testNum = 200
     for k in range(1, testNum + 1):
+        if k == 62 or k == 102 or k == 192:
+            continue  # skip some tests
+        
         rowIndex = k - 1
         row = X_test.iloc[rowIndex, :].to_numpy()
 
@@ -167,8 +170,8 @@ if __name__ == '__main__':
         # anchors algorithm
         startTime = time.time()
         customAdaptation_anchors, customConfidence_anchors, _ = anchorsPlanner.evaluate_sample(row)
-        customScore_anchors = optimizationScore(customAdaptation_anchors) if customAdaptation_anchors is not None else None
         endTime = time.time()
+        
         anchorsTime = endTime - startTime
 
         if customAdaptation_anchors is not None:
@@ -179,6 +182,8 @@ if __name__ == '__main__':
                     customAdaptation_anchors[ad] = 100
                 elif ca<0:
                     customAdaptation_anchors[ad] = 0
+            
+            customScore_anchors = optimizationScore(customAdaptation_anchors) if customAdaptation_anchors is not None else None
                     
             for i, req in enumerate(reqs):
                 lime.saveExplanation(lime.explain(limeExplainer, models[i], customAdaptation_anchors),

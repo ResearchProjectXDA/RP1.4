@@ -20,6 +20,8 @@ matplotlib.rc('font', **font)
 def personalizedBoxPlot(data, name, columnNames=None, percentage=False, path=None, show=False, seconds=False, legendInside=False):
     columns = data.columns
     nColumns = len(columns)
+    print("Columns:", columns)
+    print("Data shape:", data.shape)
     fig = plt.figure()  # plt.figure(figsize=(10, 10 * nColumns/2))
     ax1 = fig.add_subplot(111)  # (nColumns, 1, 1)
 
@@ -85,9 +87,9 @@ def personalizedBoxPlot(data, name, columnNames=None, percentage=False, path=Non
     ax1.set_position([box.x0, box.y0 + box.height * 0.1,
                      box.width, box.height * 0.9])
     if legendInside:
-        ax1.legend([bp["boxes"][0], bp["boxes"][1]], ["NSGA-III", "XDA"],)
+        ax1.legend([bp["boxes"][0], bp["boxes"][1]], ["NSGA-III", "XDA", "Anchors"],)
     else:
-        ax1.legend([bp["boxes"][0], bp["boxes"][1]], ["NSGA-III", "XDA"],
+        ax1.legend([bp["boxes"][0], bp["boxes"][1]], ["NSGA-III", "XDA", "Anchors"],
                    ncol=2, loc='upper center', bbox_to_anchor=(0.5, -0.1))
 
     # Adding title
