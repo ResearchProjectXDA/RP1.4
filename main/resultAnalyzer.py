@@ -29,10 +29,10 @@ def personalizedBoxPlot(data, name, columnNames=None, percentage=False, path=Non
     bp = ax1.boxplot(data, patch_artist=True,
                      notch='True', vert=True)
 
-    colors = plt.cm.Spectral(np.linspace(.1, .9, 2))
+    colors = plt.cm.Spectral(np.linspace(.1, .9, 3))
     # colors = np.append(colors[0::2], colors[1::2], axis=0)
     c = np.copy(colors)
-    for i in range(nColumns//2):
+    for i in range(nColumns//3):
         c = np.append(c, colors, axis=0)
 
     colors = c
@@ -121,10 +121,10 @@ def personalizedBoxPlot(data, name, columnNames=None, percentage=False, path=Non
 
 
 def personalizedBarChart(data, name, path=None, show=False, percentage=False):
-    colors = plt.cm.Spectral(np.linspace(.1, .9, 2))
+    colors = plt.cm.Spectral(np.linspace(.1, .9, 3))
     # colors = np.append(colors[0::2], colors[1::2], axis=0)
     c = np.copy(colors)
-    for i in range(len(data.values) // 2):
+    for i in range(len(data.values) // 3):
         c = np.append(c, colors, axis=0)
 
     colors = c
