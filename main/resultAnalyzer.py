@@ -87,9 +87,9 @@ def personalizedBoxPlot(data, name, columnNames=None, percentage=False, path=Non
     ax1.set_position([box.x0, box.y0 + box.height * 0.1,
                      box.width, box.height * 0.9])
     if legendInside:
-        ax1.legend([bp["boxes"][0], bp["boxes"][1]], ["NSGA-III", "XDA", "Anchors"],)
+        ax1.legend([bp["boxes"][0], bp["boxes"][1], bp["boxes"][2]], ["NSGA-III", "XDA", "Anchors"],)
     else:
-        ax1.legend([bp["boxes"][0], bp["boxes"][1]], ["NSGA-III", "XDA", "Anchors"],
+        ax1.legend([bp["boxes"][0], bp["boxes"][1], bp["boxes"][2]], ["NSGA-III", "XDA", "Anchors"],
                    ncol=2, loc='upper center', bbox_to_anchor=(0.5, -0.1))
 
     # Adding title
