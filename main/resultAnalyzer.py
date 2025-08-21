@@ -26,8 +26,9 @@ def personalizedBoxPlot(data, name, columnNames=None, percentage=False, path=Non
     ax1 = fig.add_subplot(111)  # (nColumns, 1, 1)
 
     # Creating axes instance
-    bp = ax1.boxplot(data, patch_artist=True,
-                     notch='True', vert=True)
+    bp = ax1.boxplot([data[col].dropna().values for col in data.columns],
+                 patch_artist=True, notch=True, vert=True)
+
 
     colors = plt.cm.Spectral(np.linspace(.1, .9, 3))
     # colors = np.append(colors[0::2], colors[1::2], axis=0)
@@ -90,7 +91,7 @@ def personalizedBoxPlot(data, name, columnNames=None, percentage=False, path=Non
         ax1.legend([bp["boxes"][0], bp["boxes"][1], bp["boxes"][2]], ["NSGA-III", "XDA", "Anchors"],)
     else:
         ax1.legend([bp["boxes"][0], bp["boxes"][1], bp["boxes"][2]], ["NSGA-III", "XDA", "Anchors"],
-                   ncol=2, loc='upper center', bbox_to_anchor=(0.5, -0.1))
+                   ncol=3, loc='upper center', bbox_to_anchor=(0.5, -0.1))
 
     # Adding title
     plt.title(name)
