@@ -17,7 +17,7 @@ font = {'family' : 'sans',
 matplotlib.rc('font', **font)
 
 
-def personalizedBoxPlot(data, name, columnNames=None, percentage=False, path=None, show=False, seconds=False, legendInside=False):
+def personalizedBoxPlot(data, name, columnNames=None, percentage=False, path=None, show=False, seconds=False, legendInside=False, logscale=False):
     columns = data.columns
     nColumns = len(columns)
     print("Columns:", columns)
@@ -66,6 +66,8 @@ def personalizedBoxPlot(data, name, columnNames=None, percentage=False, path=Non
                   color='#e7298a',
                   alpha=0.5)
 
+    if logscale:
+        ax1.set_yscale('log')
     # x-axis labels
     if columnNames is not None and len(columnNames) > 1:
         ax1.xaxis.set_ticks(np.arange(1.5, len(columnNames) * 2, step=2), columnNames)
@@ -232,7 +234,7 @@ if not os.path.exists(plotPath):
 
 personalizedBoxPlot(confidences, "Confidences comparison", reqsNamesInGraphs, path=plotPath, percentage=False)
 personalizedBoxPlot(scores, "Score comparison", path=plotPath)
-personalizedBoxPlot(times, "Execution time comparison", path=plotPath, seconds=True, legendInside=True)
+personalizedBoxPlot(times, "Execution time comparison", path=plotPath, seconds=True, legendInside=True, logscale=True)
 
 # predicted successful adaptations
 nsga3PredictedSuccessful = (confidences[nsga3ConfidenceNames] > targetConfidence).all(axis=1)
@@ -241,7 +243,7 @@ anchorsPredictedSuccessful = (confidences[anchorsConfidenceNames] > targetConfid
 
 personalizedBoxPlot(confidences[nsga3PredictedSuccessful], "Confidences comparison on NSGA-III predicted success", reqsNamesInGraphs, path=plotPath, percentage=False)
 personalizedBoxPlot(scores[nsga3PredictedSuccessful], "Score comparison on NSGA-III predicted success", path=plotPath)
-personalizedBoxPlot(times[nsga3PredictedSuccessful], "Execution time comparison on NSGA-III predicted success", path=plotPath, seconds=True, legendInside=True)
+personalizedBoxPlot(times[nsga3PredictedSuccessful], "Execution time comparison on NSGA-III predicted success", path=plotPath, seconds=True, legendInside=True, logscale=True)
 
 print("NSGA-III predicted success rate: " + "{:.2%}".format(nsga3PredictedSuccessful.sum() / nsga3PredictedSuccessful.shape[0]))
 print(str(nsga3Confidences.mean()) + "\n")
