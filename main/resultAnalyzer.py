@@ -69,10 +69,16 @@ def personalizedBoxPlot(data, name, columnNames=None, percentage=False, path=Non
     if logscale:
         ax1.set_yscale('log')
     # x-axis labels
-    if columnNames is not None and len(columnNames) > 1:
-        ax1.xaxis.set_ticks(np.arange(1.5, len(columnNames) * 2, step=2), columnNames)
+    if columnNames is not None and len(columnNames) > 0:
+        nGroups = len(columnNames)
+        groupSize = 3  # you have 3 algorithms: NSGA-III, XDA, Anchors
+        positions = np.arange(1, nGroups * groupSize + 1)  # 1..12 for 4 groups
+        centers = [np.mean(positions[i*groupSize:(i+1)*groupSize]) for i in range(nGroups)]
+        ax1.set_xticks(centers)
+        ax1.set_xticklabels(columnNames)
     else:
         plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+
 
     # y-axis
     if percentage:
