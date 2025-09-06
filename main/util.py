@@ -62,6 +62,7 @@ def readFromCsv(path):
 
     # numpy arrays are read as strings, must convert them back in arrays
     for c in columns:
-        results[c] = results[c].apply(lambda x: np.fromstring(x[1:-1], dtype=float, sep=' '))
+        results[c] = results[c].apply(lambda x:  np.fromstring(x[1:-1], dtype=float, sep=' ')if x[1]!='[' else np.fromstring(x[2:-2], dtype=float, sep=' '))
+
 
     return results
