@@ -58,7 +58,7 @@ if __name__ == '__main__':
     # evaluate adaptations
     evaluate = True
 
-    ds = pd.read_csv('../datasets/dataset5000.csv')
+    ds = pd.read_csv('../datasets/new_dataset.csv')
     featureNames = ["cruise speed",
                     "image resolution",
                     "illuminance",
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     X = ds.loc[:, featureNames]
     y = ds.loc[:, reqs]
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.4, random_state=42
+        X, y, test_size=0.2, random_state=42
     )
 
     models = []
@@ -151,10 +151,8 @@ if __name__ == '__main__':
     for f in files:
         os.remove(f)
 
-    testNum = 200
+    testNum = 50
     for k in range(1, testNum + 1):
-        if k == 62 or k == 102 or k == 192:
-            continue  # skip some tests
         
         rowIndex = k - 1
         row = X_test.iloc[rowIndex, :].to_numpy()
