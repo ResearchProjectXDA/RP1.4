@@ -6,6 +6,9 @@ import warnings
 import pandas as pd
 import numpy as np
 from colorama import Fore, Style
+
+# Set random seeds for reproducibility
+np.random.seed(42)
 from sklearn.model_selection import train_test_split
 from model.ModelConstructor import constructModel
 import explainability_techniques.LIME as lime

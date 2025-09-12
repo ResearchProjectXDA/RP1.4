@@ -8,7 +8,8 @@ def createLimeExplainer(X_train):
         training_data=np.array(X_train),
         feature_names=X_train.columns,
         class_names=['bad', 'good'],
-        mode='classification'
+        mode='classification',
+        random_state=1234
     )
     return explainer
 

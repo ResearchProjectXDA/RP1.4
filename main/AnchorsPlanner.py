@@ -26,6 +26,9 @@ class AnchorsPlanner:
         Parameters
         ----------
         """
+        # Set random seed for reproducibility
+        np.random.seed(42)
+        
         self.reqClassifiers = reqClassifiers
         self.reqNames = reqNames
         self.feature_number = feature_number
