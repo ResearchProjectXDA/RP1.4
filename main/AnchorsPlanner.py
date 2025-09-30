@@ -175,7 +175,7 @@ class AnchorsPlanner:
                     index = explanations.index(exp)
                     missing = 1
             if missing:
-                print(exp_reordered)
+                #print(exp_reordered)
                 missing = 0
             explanations_reordered.append(exp_reordered)
             self.explanations = explanations_reordered
@@ -1047,11 +1047,12 @@ class AnchorsPlanner:
                 
                 confidence =  vecPredictProba(self.reqClassifiers, sample.reshape(1, -1))
                 min_prob = np.min(confidence)
+                n_iter = 0
                 if min_prob < threshold:
-                    sample = self.findBestAdaptation(sample, self.explanations[min_dist_index_observable], self.controllableFeaturesNames)
+                    sample, n_iter = self.findBestAdaptation(sample, self.explanations[min_dist_index_observable], self.controllableFeaturesNames)
                 confidence =  vecPredictProba(self.reqClassifiers, sample.reshape(1, -1))
 
-                return sample, confidence, outputs   
+                return sample, confidence, outputs, n_iter  
             else:
                 #print("We are inside polytiope ", min_dist_index_observable, " for the observable features but not for the controllable ones, we will go there")
                 polytope = self.explanations[min_dist_index_observable]
@@ -1087,11 +1088,12 @@ class AnchorsPlanner:
                 #print("output: ", output)
                 contr_f_dist, obs_f_dist, min_dist_controllable, min_dist_index_controllable, min_dist_observable, min_dist_index_observable = self.min_dist_polytope(sample, self.explanations, self.controllableFeaturesNames, self.observableFeaturesNames)
                 confidence =  vecPredictProba(self.reqClassifiers, sample.reshape(1, -1))
-                min_prob = np.min(confidence)
+                min_prob = np.min(confidence) 
+                n_iter = 0
                 if min_prob < threshold:
-                    sample = self.findBestAdaptation(sample, self.explanations[min_dist_index_observable], self.controllableFeaturesNames)
+                    sample, n_iter = self.findBestAdaptation(sample, self.explanations[min_dist_index_observable], self.controllableFeaturesNames)
                 confidence =  vecPredictProba(self.reqClassifiers, sample.reshape(1, -1))
-                return sample, confidence, outputs   
+                return sample, confidence, outputs, n_iter   
         else:
             #print("The sample is not in the polytope for the observable features!")
             #print("The closest polytope for NCF is at dist: ",obs_f_dist[min_dist_index_observable])
@@ -1129,10 +1131,11 @@ class AnchorsPlanner:
                 output = output and bool(tmp_output)
             confidence =  vecPredictProba(self.reqClassifiers, sample.reshape(1, -1))
             min_prob = np.min(confidence)
+            n_iter = 0
             if min_prob < threshold:
-                sample = self.findBestAdaptation(sample, self.explanations[min_dist_index_observable], self.controllableFeaturesNames)
+                sample, n_iter = self.findBestAdaptation(sample, self.explanations[min_dist_index_observable], self.controllableFeaturesNames)
             confidence =  vecPredictProba(self.reqClassifiers, sample.reshape(1, -1))[0]
-            return sample, confidence, outputs           
+            return sample, confidence, outputs, n_iter           
             
 
     def go_inside_CF_given_polytope(self, sample, polytope, controllable_features, observable_features):
@@ -1343,7 +1346,7 @@ class AnchorsPlanner:
                 if early_stopping_condition_counter >= 25:
                     break
 
-        return adapted_sample
+        return adapted_sample, n_iter
 
     def findBestAdaptationUsingNegatives(self, sample, polytope, controllable_features, threshold=0.8, max_iter=100):
         delta_controllable_features = []

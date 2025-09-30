@@ -170,7 +170,7 @@ if __name__ == '__main__':
 
         # anchors algorithm
         startTime = time.time()
-        customAdaptation_anchors, customConfidence_anchors, _ = anchorsPlanner.evaluate_sample(row)
+        customAdaptation_anchors, customConfidence_anchors, _, n_iter = anchorsPlanner.evaluate_sample(row)
         endTime = time.time()
         
         anchorsTime = endTime - startTime
@@ -193,6 +193,7 @@ if __name__ == '__main__':
             print("Best adaptation Anchors:                 " + str(customAdaptation_anchors[0:n_controllableFeatures]))
             print("Model confidence:                " + str(customConfidence_anchors))
             print("Adaptation score:                " + str(customScore_anchors) + " / 400")
+            print("Number of iterations:            " + str(n_iter))
         else:
             print("No adaptation found")
             customScore_anchors = None
@@ -334,7 +335,7 @@ if __name__ == '__main__':
     path = "../results"
     if not os.path.exists(path):
         os.makedirs(path)
-    results.to_csv(path + "/results.csv")
+    results.to_csv(path + "/results_new.csv")
 
     if evaluate:
         evaluateAdaptations(results, featureNames)
