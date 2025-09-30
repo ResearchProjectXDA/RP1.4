@@ -41,17 +41,17 @@ class AnchorsPlanner:
         self.observableFeaturesNames = [feature_names[i] for i in self.observableFeatureIndices]
         self.controllableFeatureDomains = controllableFeatureDomains
 
-        print("Requirements classifiers: ", reqClassifiers)
+        #print("Requirements classifiers: ", reqClassifiers)
 
         training_df = pd.read_csv(training_dataset)
-        print("Training dataset loaded: ", training_df.shape)
+        #print("Training dataset loaded: ", training_df.shape)
         all_true_training = training_df[
             (training_df['req_0'] == 1) &
             (training_df['req_1'] == 1) &
             (training_df['req_2'] == 1) &
             (training_df['req_3'] == 1)
         ].drop(columns=reqNames)
-        print("Training dataset with all requirements satisfied: ", all_true_training.shape)
+        #print("Training dataset with all requirements satisfied: ", all_true_training.shape)
 
         datasets = []
         true_from_anchors_df = {}
@@ -76,13 +76,13 @@ class AnchorsPlanner:
                 datasets[i].feature_names,
                 datasets[i].train,
                 datasets[i].categorical_names)) 
-        print("Datasets[0]: ", datasets[0].train.shape, datasets[0].labels_train.shape)
-        print("Datasets[1]: ", datasets[1].train.shape, datasets[1].labels_train.shape)
-        print("Datasets[2]: ", datasets[2].train.shape, datasets[2].labels_train.shape)
-        print("Datasets[3]: ", datasets[3].train.shape, datasets[3].labels_train.shape)
+        # print("Datasets[0]: ", datasets[0].train.shape, datasets[0].labels_train.shape)
+        # print("Datasets[1]: ", datasets[1].train.shape, datasets[1].labels_train.shape)
+        # print("Datasets[2]: ", datasets[2].train.shape, datasets[2].labels_train.shape)
+        # print("Datasets[3]: ", datasets[3].train.shape, datasets[3].labels_train.shape)
 
-        for i in range(req_number):
-            print(f"Model {i+1} training accuracy: {accuracy_score(datasets[i].labels_train, reqClassifiers[i].predict(datasets[i].train)):.4f}")
+        # for i in range(req_number):
+        #     print(f"Model {i+1} training accuracy: {accuracy_score(datasets[i].labels_train, reqClassifiers[i].predict(datasets[i].train)):.4f}")
 
         for i, req in enumerate(reqNames):
             print(f"___________Requirement {i+1}: {req}___________")
@@ -171,7 +171,7 @@ class AnchorsPlanner:
                     exp_reordered[k] = exp[k]
                 else:
                     exp_reordered[k] = (-inf, inf, False, False)
-                    print(k, "missing, added: ", exp_reordered[k])
+                    #print(k, "missing, added: ", exp_reordered[k])
                     index = explanations.index(exp)
                     missing = 1
             if missing:
@@ -210,16 +210,16 @@ class AnchorsPlanner:
         #         probs_boundary_b = vecPredictProba(reqClassifiers, boundary_sample_b)
         #         print(f"Boundary sample b {i} with probs: {probs_boundary_b}")
 
-        print(feature_names)
+        #print(feature_names)
         number_of_random_points = 10
         number_of_explanations = len(explanations_reordered)
-        print(f"Number of explanations: {number_of_explanations}")
+        #print(f"Number of explanations: {number_of_explanations}")
         req_confidences_sum = np.zeros((1, 4))  # Initialize the sum of probabilities for each requirement
         coefficients_to_remove = []
         for n in range(number_of_explanations):
             single_anchor_mean = np.zeros((1, 4))
             single_anchor = explanations[n]
-            print(f"anchor number {n}")
+            #print(f"anchor number {n}")
             
             for i in range(number_of_random_points):
                 random_sample = np.zeros((1, feature_number))   
@@ -241,28 +241,28 @@ class AnchorsPlanner:
                 probs = vecPredictProba(reqClassifiers, random_sample)
                 req_confidences_sum += probs
                 single_anchor_mean += probs
-                print(f"Sample {i} with probs: {probs}")
+                #print(f"Sample {i} with probs: {probs}")
             probs_boundary_a = vecPredictProba(reqClassifiers, boundary_sample_a)
             single_anchor_mean += probs_boundary_a
-            print(f"Boundary sample {i} with probs: {probs_boundary_a}")
+            #print(f"Boundary sample {i} with probs: {probs_boundary_a}")
             probs_boundary_b = vecPredictProba(reqClassifiers, boundary_sample_b)
             single_anchor_mean += probs_boundary_b
-            print(f"Boundary sample {i} with probs: {probs_boundary_b}")
+            #print(f"Boundary sample {i} with probs: {probs_boundary_b}")
             single_anchor_mean /= (number_of_random_points + 2)
-            print(f"Average probabilities for anchor {n}: {single_anchor_mean}")
+            #print(f"Average probabilities for anchor {n}: {single_anchor_mean}")
             if(np.any(single_anchor_mean < 0.5)):
-                print(f"Anchor {n} has average probabilities below 0.5, removing it")
+                #print(f"Anchor {n} has average probabilities below 0.5, removing it")
                 coefficients_to_remove.append(n)
 
         req_confidences_sum /= number_of_explanations * number_of_random_points
-        print("Average probabilities for each requirement over all explanations and random points:", req_confidences_sum)
+        #print("Average probabilities for each requirement over all explanations and random points:", req_confidences_sum)
 
     
 
         # Remove anchors with average probabilities below 0.5
         explanations_removed_negatives = [explanations[i] for i in range(len(explanations)) if i not in coefficients_to_remove]
         explanations = explanations_removed_negatives
-        print(f"Removed {len(coefficients_to_remove)} anchors with average probabilities below 0.5, number of remaining anchors: {len(explanations)}")
+        #print(f"Removed {len(coefficients_to_remove)} anchors with average probabilities below 0.5, number of remaining anchors: {len(explanations)}")
 
         #self.negative_explanations = self.create_negative_anchors(negatively_classified, datasets, self.reqClassifiers, req_number, explainer)
 
@@ -285,7 +285,7 @@ class AnchorsPlanner:
         return intersected_exp
 
     def create_negative_anchors(self, negatively_classified, datasets, models, req_number, explainer):
-        print("Starting negative explanations creation...")
+        #print("Starting negative explanations creation...")
         explanations = []
 
         for j, p_sample in enumerate(negatively_classified):
@@ -317,11 +317,11 @@ class AnchorsPlanner:
                     exp_reordered[k] = exp[k]
                 else:
                     exp_reordered[k] = (-inf, inf, False, False)
-                    print(k, "missing, added: ", exp_reordered[k])
+                   # print(k, "missing, added: ", exp_reordered[k])
                     index = explanations.index(exp)
                     missing = 1
             if missing:
-                print(exp_reordered)
+                # print(exp_reordered)
                 missing = 0
             explanations_reordered.append(exp_reordered)
             self.explanations = explanations_reordered
@@ -646,7 +646,7 @@ class AnchorsPlanner:
                 merged_point = np.concatenate((merged_point, [point[-1]]))
                 merged_points.append(merged_point)
                 #print("merged_point:", merged_point.shape)
-        print(len(merged_points))
+        #print(len(merged_points))
         
         for r, req in enumerate(req_names):
             print(f"___________Requirement {req}___________")
@@ -661,7 +661,7 @@ class AnchorsPlanner:
         models_positives = np.where(output != 0)[0]
         merged_points = np.array(merged_points)
         positive_merged_points = merged_points[models_positives]
-        print("positive_merged_points:", positive_merged_points.shape)
+        #print("positive_merged_points:", positive_merged_points.shape)
         return positive_merged_points
 
     def __create_new_anchors(self, datasets, explainers, models_positives, models, req_number, explanations):
@@ -709,7 +709,7 @@ class AnchorsPlanner:
         #print("models_positives:", models_positives[0])
         for i, p_sample in enumerate(models_positives):
             intersected_exp = {}
-            print("p_sample:", p_sample)
+            #print("p_sample:", p_sample)
             for i in range(req_number):
                 #get the sample
                 #sample = datasets[i].train[p_sample]
@@ -739,11 +739,11 @@ class AnchorsPlanner:
                     exp_reordered[k] = exp[k]
                 else:
                     exp_reordered[k] = (-inf, inf, False, False)
-                    print(k, "missing, added: ", exp_reordered[k])
+                    #print(k, "missing, added: ", exp_reordered[k])
                     index = explanations.index(exp)
                     missing = 1
             if missing:
-                print(exp_reordered)
+                #print(exp_reordered)
                 missing = 0
             explanations_reordered.append(exp_reordered)
         explanations = explanations_reordered    
@@ -808,12 +808,12 @@ class AnchorsPlanner:
         #Iterate until the coverage is greater than the threshold
         while(coverage < threshold):
             grid_points = self.__grid_points_in_RN(explanations, feature_names, delta, STEP, min_vals, max_vals)
-            print("grid_points:", grid_points.shape)
+            #print("grid_points:", grid_points.shape)
             if grid_points.shape[0] == 0:
-                print("No grid points found, stopping augmentation.")
+                #print("No grid points found, stopping augmentation.")
                 break
             model_positives = self.__evaluate_grid_points(grid_points, models, positive_samples, req_names, min_idx_cf, max_idx_cf)
-            print("model_positives:", model_positives.shape)
+            #print("model_positives:", model_positives.shape)
             explanations = self.__create_new_anchors(datasets, explainers, model_positives, models, req_number, explanations)
             coverage = self.coverage(explanations, feature_names)
             STEP += STEP
@@ -1379,13 +1379,13 @@ class AnchorsPlanner:
                 while in_negatives == 1:
                     #print("Adapted sample is in the negatives, trying to adapt it further")
                     adapted_sample[i] += delta_controllable_features[i]
-                    print("adapted_sample: ", adapted_sample)
+                    #print("adapted_sample: ", adapted_sample)
                     if adapted_sample[i] >= min(100,polytope[f_name][1]) or adapted_sample[i] <= max(0,polytope[f_name][0]):
-                        print("Adapted sample is outside the bounds of the polytope, stopping the search for the best adaptation for feature: ", f_name)
+                        #print("Adapted sample is outside the bounds of the polytope, stopping the search for the best adaptation for feature: ", f_name)
                         break
                     adapted_sample_array = np.array(adapted_sample).reshape(1, -1)
                     in_negatives = self.classify(adapted_sample_array, self.negative_explanations, self.feature_names)
-                    print("in_negatives: ", in_negatives)
+                    #print("in_negatives: ", in_negatives)
                 probs = vecPredictProba(self.reqClassifiers, adapted_sample.reshape(1, -1))
                 
                 probs = np.minimum(probs, threshold)
