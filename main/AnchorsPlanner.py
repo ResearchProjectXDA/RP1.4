@@ -85,7 +85,7 @@ class AnchorsPlanner:
         #     print(f"Model {i+1} training accuracy: {accuracy_score(datasets[i].labels_train, reqClassifiers[i].predict(datasets[i].train)):.4f}")
 
         for i, req in enumerate(reqNames):
-            print(f"___________Requirement {i+1}: {req}___________")
+            #print(f"___________Requirement {i+1}: {req}___________")
             output = reqClassifiers[i].predict(datasets[i].train)
             #obtain the indices of the samples that have the requirement satisfied (truly in the dataset)
             real_values_single_req = np.where(datasets[i].labels_train == 1)[0]
@@ -112,7 +112,7 @@ class AnchorsPlanner:
         final = np.ones(datasets[0].train.shape[0])
         real_values = np.ones(datasets[0].train.shape[0])
         for i, req in enumerate(reqNames):
-            print(f"___________Requirement {i+1}: {req}___________")
+            #print(f"___________Requirement {i+1}: {req}___________")
             output = reqClassifiers[i].predict(datasets[i].train)
             #obtain the indices of the samples that have the requirement satisfied (truly in the dataset)
             real_values_single_req = datasets[i].labels_train
