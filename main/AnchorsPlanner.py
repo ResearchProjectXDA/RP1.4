@@ -42,15 +42,11 @@ class AnchorsPlanner:
         self.controllableFeatureDomains = controllableFeatureDomains
 
         #print("Requirements classifiers: ", reqClassifiers)
-
         training_df = pd.read_csv(training_dataset)
         #print("Training dataset loaded: ", training_df.shape)
         all_true_training = training_df[
-            (training_df['req_0'] == 1) &
-            (training_df['req_1'] == 1) &
-            (training_df['req_2'] == 1) &
-            (training_df['req_3'] == 1)
-        ].drop(columns=reqNames)
+            np.logical_and.reduce([training_df[req] == 1 for req in self.reqNames])
+        ].drop(columns=self.reqNames)
         #print("Training dataset with all requirements satisfied: ", all_true_training.shape)
 
         datasets = []
@@ -1273,7 +1269,7 @@ class AnchorsPlanner:
         
     #     return best_sample
 
-    def findBestAdaptation(self, sample, polytope, controllable_features, threshold=0.8, max_iter=50):
+    def findBestAdaptation(self, sample, polytope, controllable_features, threshold=0.8, max_iter=1000):
         delta_controllable_features = []
         #print("sample: ", sample)
         for i, f_name in enumerate(controllable_features):#define the delta for each interval
@@ -1337,13 +1333,14 @@ class AnchorsPlanner:
                 best_avg_prob = current_MAX_avg_prob
                 min_prob = curr_min_prob
                 adapted_sample = current_max_adapted.copy()
-                
+                delta_controllable_features[i] = (b-a) * 0.05
+
             else:
                 current_max_adapted = adapted_sample.copy() #Reset the adapted sample to the best sample found so far
                 for i, req in enumerate(controllable_features):
                     delta_controllable_features[i] *= 2 # We increase the delta to explore more
                 early_stopping_condition_counter += 1
-                if early_stopping_condition_counter >= 25:
+                if early_stopping_condition_counter >= 100:
                     break
 
         return adapted_sample, n_iter
