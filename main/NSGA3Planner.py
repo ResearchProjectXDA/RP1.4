@@ -3,7 +3,7 @@ from pymoo.core.problem import Problem
 from pymoo.algorithms.moo.nsga3 import NSGA3
 from pymoo.optimize import minimize
 from pymoo.util.ref_dirs import get_reference_directions
-from pymoo.termination.default import DefaultMultiObjectiveTermination
+from pymoo.termination import get_termination
 from util import vecPredictProba
 
 
@@ -21,11 +21,8 @@ class NSGA3Planner:
         # create the algorithm object
         self.algorithm = NSGA3(ref_dirs=ref_dirs)
 
-        self.termination = DefaultMultiObjectiveTermination(
-            cvtol=1e-6,
-            period=30,
-            n_max_gen=1000
-        )
+        self.termination = get_termination("n_gen", 100)
+        self.externalFeatures = np.zeros((1, len(controllableFeatureIndices)))
 
         # create problem instance
         self.problem = Adaptation(reqClassifiers, targetConfidence, self.algorithm.pop_size, controllableFeatureIndices,
@@ -69,7 +66,8 @@ class Adaptation(Problem):
 
     @externalFeatures.setter
     def externalFeatures(self, externalFeatures):
-        self._externalFeatures = np.repeat([externalFeatures], self.popSize, axis=0)
+        # Store the single external features vector for later use
+        self._externalFeatures = np.array([externalFeatures])
 
     def __init__(self, models, targetConfidence, popSize, controllableFeatureIndices, controllableFeatureDomains,
                  optimizationDirections):
@@ -83,10 +81,20 @@ class Adaptation(Problem):
         self.externalFeatures = []
 
     def _evaluate(self, x, out, *args, **kwargs):
-        xFull = np.empty((self.popSize, self.n_var + self.externalFeatures.shape[1]))
+        # Use actual batch size instead of popSize
+        actual_batch_size = x.shape[0]
+        
+        # Create external features for the actual batch size
+        externalFeatures_batch = np.repeat([self.externalFeatures[0]], actual_batch_size, axis=0)
+        
+        xFull = np.empty((actual_batch_size, self.n_var + externalFeatures_batch.shape[1]))
         xFull[:, self.controllableFeatureIndices] = x
         externalFeatureIndices = np.delete(np.arange(xFull.shape[1]), self.controllableFeatureIndices)
-        xFull[:, externalFeatureIndices] = self.externalFeatures
+        xFull[:, externalFeatureIndices] = externalFeatures_batch
 
         out["F"] = [-self.optimizationDirections[i] * x[:, i] for i in range(x.shape[1])]
-        out["G"] = [self.targetConfidence - vecPredictProba(self.models, xFull)]
+        
+        # Adjust target confidence for actual batch size
+        targetConfidence_batch = np.repeat([self.targetConfidence[0]], actual_batch_size, axis=0)
+        constraints = targetConfidence_batch - vecPredictProba(self.models, xFull)
+        out["G"] = constraints.T if len(self.models) > 1 else constraints.flatten()
