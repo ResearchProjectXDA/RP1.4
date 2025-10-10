@@ -154,7 +154,7 @@ if __name__ == '__main__':
     for f in files:
         os.remove(f)
 
-    testNum = 50
+    testNum = 20
     for k in range(1, testNum + 1):
         
         rowIndex = k - 1
@@ -321,7 +321,7 @@ if __name__ == '__main__':
                         scoreDiffCustomNSGA, scoreDiffAnchorsCustom, scoreDiffAnchorsNSGA,
                         scoreImprovementCustomNSGA,scoreImprovementAnchorsCustom, scoreImprovementAnchorsNSGA,
                         nsga3Time, customTime, anchorsTime,
-                        speedupCustomNSGA, speedupAnchorsNSGA, speedupAnchorsCustom])
+                        speedupCustomNSGA, speedupAnchorsNSGA, speedupAnchorsCustom, n_iter])
         
 
 
@@ -331,7 +331,7 @@ if __name__ == '__main__':
                                              "score_diff_custom_NSGA", "score_diff_anchors_custom", "score_diff_anchors_nsga",
                                              "score_improvement_NSGA_custom[%]", "score_improvement_anchors_custom[%]", "score_improvement_anchors_NSGA[%]",
                                              "nsga3_time", "custom_time", "anchors_time",
-                                             "speed-up_custom_NSGA", "speed-up_anchors_NSGA", "speed-up_anchors_custom"])
+                                             "speed-up_custom_NSGA", "speed-up_anchors_NSGA", "speed-up_anchors_custom", "iterations_anchors"])
     path = "../results"
     if not os.path.exists(path):
         os.makedirs(path)

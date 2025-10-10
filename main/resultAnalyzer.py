@@ -190,7 +190,7 @@ reqs = ["req_0", "req_1", "req_2", "req_3"]
 reqsNamesInGraphs = ["R1", "R2", "R3", "R4"]
 
 # read dataframe from csv
-results = readFromCsv(pathToResults + 'results.csv')
+results = readFromCsv(pathToResults + 'results_new.csv')
 nReqs = len(results["nsga3_confidence"][0])
 reqs = reqs[:nReqs]
 reqsNamesInGraphs = reqsNamesInGraphs[:nReqs]
@@ -293,3 +293,41 @@ successRateOfPredictedSuccess = pd.DataFrame([[outcomes[nsga3OutcomeNames][nsga3
                                                outcomes[anchorsOutcomeNames][anchorsPredictedSuccessful].all(axis=1).mean()]],
                                              columns=["NSGA-III", "XDA", "Anchors"])
 personalizedBarChart(successRateOfPredictedSuccess, "Success Rate of Predicted Success", plotPath)
+
+
+iterations_per_sample = results["iterations_anchors"]
+preds_anch = results["anchors_confidence"]
+
+df_iterations = pd.DataFrame()
+df_iterations["iterations_anchors"] = iterations_per_sample
+df_iterations["anchors_confidence"] = preds_anch
+
+
+df_it = pd.DataFrame(df_iterations)
+
+# # Convert list column to numpy arrays for easier computation
+# df_it['anchors_confidence'] = df_it['anchors_confidence'].apply(np.array)
+
+# # Group by 'iterations_anchors' and compute mean vector
+# grouped = df_it.groupby('iterations_anchors')['anchors_confidence'].apply(lambda x: np.mean(np.stack(x), axis=0))
+
+# # Convert the result to a dataframe where each column is a unique iteration
+# final_df = pd.DataFrame(grouped.tolist(), index=grouped.index).T
+# final_df.columns = [f'Iter {col}' for col in final_df.columns]
+# print(final_df.head())
+
+
+
+# Convert to numpy arrays
+df_it['anchors_confidence'] = df_it['anchors_confidence'].apply(np.array)
+
+# Group by 'iterations_anchors' and compute mean vector
+grouped = df_it.groupby('iterations_anchors')['anchors_confidence'].apply(lambda x: np.mean(np.stack(x), axis=0))
+
+# Convert to a dataframe: each column = unique iteration, each row = vector element
+final_df = pd.DataFrame({k: v for k, v in grouped.items()}).T[0]
+
+
+print(final_df.head())
+personalizedBarChart(final_df, "Anchors Predicted Success w.r.t. it.", plotPath)
+
