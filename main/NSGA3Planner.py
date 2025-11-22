@@ -22,7 +22,6 @@ class NSGA3Planner:
         self.algorithm = NSGA3(ref_dirs=ref_dirs)
 
         self.termination = get_termination("n_gen", 100)
-        self.externalFeatures = np.zeros((1, len(controllableFeatureIndices)))
 
         # create problem instance
         self.problem = Adaptation(reqClassifiers, targetConfidence, self.algorithm.pop_size, controllableFeatureIndices,
@@ -66,35 +65,69 @@ class Adaptation(Problem):
 
     @externalFeatures.setter
     def externalFeatures(self, externalFeatures):
-        # Store the single external features vector for later use
-        self._externalFeatures = np.array([externalFeatures])
+        if len(externalFeatures) > 0:
+            self._externalFeatures = np.array([externalFeatures])
+        else:
+            self._externalFeatures = np.array([[]])
 
     def __init__(self, models, targetConfidence, popSize, controllableFeatureIndices, controllableFeatureDomains,
                  optimizationDirections):
         super().__init__(n_var=len(controllableFeatureIndices), n_obj=len(controllableFeatureIndices),
                          n_constr=len(models), xl=controllableFeatureDomains[:, 0], xu=controllableFeatureDomains[:, 1])
         self.models = models
-        self.targetConfidence = np.repeat([targetConfidence], popSize, axis=0)
+        self.targetConfidence = targetConfidence
         self.controllableFeatureIndices = controllableFeatureIndices
         self.optimizationDirections = optimizationDirections
         self.popSize = popSize
-        self.externalFeatures = []
+        self._externalFeatures = np.array([[]])  # Initialize as empty
 
     def _evaluate(self, x, out, *args, **kwargs):
-        # Use actual batch size instead of popSize
-        actual_batch_size = x.shape[0]
+        # Ensure x is 2D
+        if x.ndim == 1:
+            x = x.reshape(1, -1)
         
-        # Create external features for the actual batch size
-        externalFeatures_batch = np.repeat([self.externalFeatures[0]], actual_batch_size, axis=0)
+        n_samples = x.shape[0]
         
-        xFull = np.empty((actual_batch_size, self.n_var + externalFeatures_batch.shape[1]))
+        # Check if we have external features properly set
+        if self.externalFeatures.size == 0:
+            raise ValueError("External features not set properly")
+        
+        n_external_features = self.externalFeatures.shape[1]
+        total_features = self.n_var + n_external_features
+        
+        # Create full feature vectors
+        xFull = np.zeros((n_samples, total_features))
+        
+        # Set controllable features
         xFull[:, self.controllableFeatureIndices] = x
-        externalFeatureIndices = np.delete(np.arange(xFull.shape[1]), self.controllableFeatureIndices)
-        xFull[:, externalFeatureIndices] = externalFeatures_batch
-
-        out["F"] = [-self.optimizationDirections[i] * x[:, i] for i in range(x.shape[1])]
         
-        # Adjust target confidence for actual batch size
-        targetConfidence_batch = np.repeat([self.targetConfidence[0]], actual_batch_size, axis=0)
-        constraints = targetConfidence_batch - vecPredictProba(self.models, xFull)
-        out["G"] = constraints.T if len(self.models) > 1 else constraints.flatten()
+        # Set external features
+        externalFeatureIndices = np.delete(np.arange(total_features), self.controllableFeatureIndices)
+        
+        # Broadcast external features to all samples
+        external_features_broadcast = np.repeat(self.externalFeatures, n_samples, axis=0)
+        xFull[:, externalFeatureIndices] = external_features_broadcast
+
+        # Objectives: minimize/maximize each controllable feature according to optimization directions
+        objectives = np.zeros((n_samples, self.n_obj))
+        for i in range(self.n_obj):
+            objectives[:, i] = -self.optimizationDirections[i] * x[:, i]
+        out["F"] = objectives
+
+        # Constraints: ensure confidence is above target
+        confidence_predictions = vecPredictProba(self.models, xFull)
+        
+        # Constraint: g(x) <= 0, so we formulate as (target - confidence) <= 0
+        # which means confidence >= target
+        if len(self.models) == 1:
+            # Single requirement case
+            target_val = self.targetConfidence if np.isscalar(self.targetConfidence) else self.targetConfidence[0]
+            constraints = target_val - confidence_predictions.flatten()
+            out["G"] = constraints.reshape(-1, 1)
+        else:
+            # Multiple requirements case
+            target_val = self.targetConfidence if len(self.targetConfidence.shape) == 1 else self.targetConfidence[0]
+            constraints = np.zeros((n_samples, len(self.models)))
+            for i in range(len(self.models)):
+                constraints[:, i] = target_val[i] - confidence_predictions[:, i]
+            out["G"] = constraints
