@@ -74,4 +74,5 @@ Go to main/resultAnalyzer.py
   
 ```python main/resultAnalyzer.py```  
 The plots will be saved as .png images in the folder results, as specified in line 177.
+
 Alternatively, you can use this [notebook](main/notebooks/ResultsNB.ipynb) by specifying the same information.
