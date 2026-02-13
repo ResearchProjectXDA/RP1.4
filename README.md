@@ -23,14 +23,23 @@ chmod +x MDP_Dataset_builder/run.sh
 
 ## Run Adaptation Tests
 Inside main/main.py:
-* line 43: you can specify the path to your dataset
-* line 61: you can specify the list of requirements to consider
-* line 64: you can specify the size of the neighborhood
-* line 65: you can specify the number of starting solutions to consider
-* line 68: you can specify the target success probabilities for each requirement
-* line 120: you can specify the number of tests to do
+* line 64: you can specify the path to your dataset
+* line 83: you can specify the list of requirements to consider
+* line 86: you can specify the size of the neighborhood
+* line 87: you can specify the number of starting solutions to consider
+* line 90: you can specify the target success probabilities for each requirement
+* line 157: you can specify the number of tests to do
 
 ```python main/main.py```
 
+
 ## Generate Plots
+Go to main/resultAnalyzer.py
+
+* line 177: you can specify the path to your results
+* lines 179: you can specify the features used
+* line 189: you can specify which requirements are used 
+```python main/resultAnalyzer.py```
+
+Alternative you can use:
 ```python main/makeAllPlots.py```
