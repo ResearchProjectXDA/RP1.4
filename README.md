@@ -1,4 +1,4 @@
-# Explanation-Driven Self-Adaptations (XDA) Replication Package
+# Explanation-Driven Self-Adaptations Replication Package
 
 ## Install Requirements
 ```pip install -r requirements.txt```
@@ -39,7 +39,7 @@ Go to main/resultAnalyzer.py
 * line 177: you can specify the path to your results
 * lines 179: you can specify the features used
 * line 189: you can specify which requirements are used 
+
 ```python main/resultAnalyzer.py```
 
-Alternative you can use:
-```python main/makeAllPlots.py```
+Alternatively, you can use this [notebook](main/notebooks/ResultsNB.ipynb) by specifying the same information.
