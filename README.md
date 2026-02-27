@@ -34,7 +34,7 @@ Inside MDP_Dataset_builder/run.sh and MDP_Dataset_builder/run.bat:
 
 ### For macOS and Linux Users
 ```
-chmod +x MDP_Dataset_builder/run.sh
+chmod +x MDP_Dataset_Builder/run.sh
 ./run.sh
 ```
 
