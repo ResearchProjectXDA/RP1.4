@@ -17,7 +17,7 @@ Contains all datasets used for training, testing, and evaluation.
 ### 📁 `results`
 Stores experiment outputs in `.csv` format, organized into subfolders.
 
-### 📁 `MDP_dataset_builder`
+### 📁 `MDP_dataset_Builder`
 Provides the necessary tools and scripts to generate custom personalized datasets.
 
 ## Install Requirements
