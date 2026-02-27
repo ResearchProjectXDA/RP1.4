@@ -1,5 +1,11 @@
 # Explanation-Driven Self-Adaptations Replication Package
 
+## ⚠️ Disclaimer
+
+We implemented the repository using Python version 3.11.11
+
+We thus suggest using this Python version to avoid compatibility problems!
+
 ## Repository Structure
 
 This repository is divided into the following directories:
