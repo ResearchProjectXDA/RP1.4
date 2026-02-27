@@ -17,3 +17,7 @@ arviz==0.14.0
 pandas==1.5.3
 pymdptoolbox
 matplotlib==3.6.3
+seaborn 
+numba==0.61.2
+llvmlite==0.44.0
+matplotlib-inline==0.1.7
